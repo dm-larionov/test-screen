@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Recorder</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='tailwind.css') }}" />
+</head>
+
+<body class="bg-gray-800 text-white">
+
+    <header class="bg-gray-900">
+        <div class="container mx-auto">
+            <div class="flex justify-center items-center py-4">
+                <h1 class="text-2xl font-bold uppercase">Screen Recorder</h1>
+            </div>
+        </div>
+    </header>
+
+    <p>Пошумим</p>
+    <button type="button" id="screenshot-vid-recording">
+        Take screenshot
+    </button>
+    <button onclick="niggerAlert()">ДАВАЙ</button>
+    <p id="test_send"></p>
+
+
+    <main class="overflow-hidden">
+        <div class="container mx-auto py-8 px-4">
+            <h2 class="text-xl text-gray-500 uppercase font-light mb-4">
+                Video recorder
+            </h2>
+
+            <video src="" id="screensharing" autplay class="video-feedback bg-black w-full h-auto mb-4"></video>
+
+            <div class="flex flex-wrap -mx-4 mb-8">
+                <button
+                    class="start-recording mx-4 flex-1 bg-gradient-to-br from-purple-500 to to-pink-500 p-4 uppercase text-lg font-bold transition-all duration-300 hover:opacity-90 disabled:opacity-50"
+                    onclick="update_background()">
+                    Record Screen
+                </button>
+                <button
+                    class="stop-recording mx-4 flex-1 bg-gradient-to-br from-purple-500 to to-pink-500 p-4 uppercase text-lg font-bold transition-all duration-300 hover:opacity-90 disabled:opacity-50"
+                    disabled>
+                    Stop Recording
+                </button>
+            </div>
+
+            <img id='render' />
+
+            <div class="recorded-video-wrap hidden">
+                <h2 class="text-xl text-gray-500 uppercase font-light mb-4">
+                    Recorded video
+                </h2>
+
+                <video src="" class="recorded-video bg-black w-full h-auto mb-8"></video>
+                <div class="flex flex-wrap -mx-4">
+                    <a class="download-video text-center mx-4 flex-1 bg-gradient-to-br from-purple-500 to to-pink-500 p-4 uppercase text-lg font-bold transition-all duration-300 hover:opacity-90 disabled:opacity-50"
+                        disabled>
+                        Download
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        var ip = '{{ data.ip }}'
+        var port = '{{ data.port }}'
+        var socket = io.connect("http://" + window.location.host);
+        //socket.binaryType = "arraybuffer";
+
+        socket.on('eventClient', function (data) {
+            console.log(data);
+        });
+        socket.emit('eventServer', { data: 'Hello Server' });
+
+        
+
+        var screenshotButton = document.getElementById("screenshot-vid-recording");
+        screenshotButton.addEventListener("click", onCapture);
+        var canvas = document.createElement("canvas");
+        canvas.id = "draw";
+
+
+
+        function onCapture() {
+            var video = document.getElementById("screensharing");
+            console.log(new Date(), "capture", 480, 270)
+            canvas.width = 480;
+            canvas.height = 270;
+            canvas
+                .getContext("2d")
+                .drawImage(video, 0, 0, 480, 270);
+
+            canvas.toBlob(async (blob) => {
+                {
+                    //  blobToBase64(blob).then(res => {
+                    //      // do what you wanna do
+                    //      socket.emit('screenShare', { data: res });
+                    //      console.log(res); // res is base64 now
+                    //  });
+
+                    socket.emit('screenShare', { data: blob });
+                    console.log(blob)
+                    //var img_url = URL.createObjectURL(blob);
+                    //document.getElementById("render").src = img_url;
+                };
+            });
+        }
+
+        function upload(files) {
+            socket.emit("screenShare", files[0], (status) => {
+                console.log(status);
+            });
+        }
+
+
+        const blobToImage = (data) => {
+            return new Promise(resolve => {
+
+                var uint8Arr = new Uint8Array(data.buffer);
+                var binary = '';
+                for (var i = 0; i < uint8Arr.length; i++) {
+                    binary += String.fromCharCode(uint8Arr[i]);
+                }
+                var base64String = window.btoa(binary);
+
+                var img = document.getElementById("render");
+                img.onload = function () {
+                    var canvas = document.getElementById('yourCanvasId');
+                    var ctx = canvas.getContext('2d');
+                    var x = 0, y = 0;
+                    ctx.drawImage(this, x, y);
+                }
+                img.src = 'data:image/png;base64,' + base64String;
+            })
+        }
+
+
+
+        socket.on('getScreen', function (data) {
+            console.log('refresh image')
+
+            console.log(data.blob.data);
+
+            // Create a Blob from the ArrayBuffer
+            const blob = new Blob([data.blob.data], { type: 'image/png' });
+
+            var img_url = URL.createObjectURL(blob);
+            document.getElementById("render").src = img_url;
+        });
+
+
+
+
+        socket.on('echo', function (data) {
+            console.log(data);
+            document.getElementById("test_send").innerHTML = document.getElementById("test_send").innerHTML + "\n" +
+                data["echo"];
+
+        });
+
+        function niggerAlert() {
+            socket.emit('nigger');
+        }
+
+        function update_background() {
+            onCapture()
+            setTimeout(update_background, 50);
+        }
+
+
+        
+    </script>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+
+</html>
