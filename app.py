@@ -50,4 +50,4 @@ def home():
     return render_template('home.html')
 
 if __name__ == '__main__':
-    socketio.run(app, host = ip, port=port)
+    socketio.run(app, host = ip, port=port, allow_unsafe_werkzeug=True)
