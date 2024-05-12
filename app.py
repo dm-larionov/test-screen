@@ -1,12 +1,14 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
+import os
 
 app = Flask(__name__)
 MAX_BUFFER_SIZE = 50 * 1000 * 1000  # 50 MB
 socketio = SocketIO(app, max_http_buffer_size=MAX_BUFFER_SIZE)
 
 ip = "0.0.0.0"
-port = 5000
+port = os.environ['PORT']
+
 
 @socketio.on('eventServer')
 def test_connect(data):
